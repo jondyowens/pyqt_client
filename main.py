@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QApplication,QLabel,QWidget,QFormLayout
+from PyQt5.QtWidgets import QApplication,QTextEdit,QWidget,QVBoxLayout
 from PyQt5.QtGui import QIntValidator,QDoubleValidator,QFont
 from PyQt5.QtCore import Qt
 import sys, platform
@@ -13,12 +13,14 @@ class lineEditDemo(QWidget):
 
         def __init__(self,parent=None):
                 super().__init__(parent)
-                self.e1 = QLabel()
+                self.e1 = QTextEdit(parent)
+                self.setLayout(QVBoxLayout(parent))
+                self.layout().addWidget(self.e1)
                 
 
 
-        def setText(self, text):
-                self.e1.setText(text)
+        def appendText(self, text):
+                self.e1.append(text)
         def textchanged(self,text):
                 print("Changed: " + text)
 
@@ -37,17 +39,24 @@ if __name__ == "__main__":
                 sys.exit()
 
         try:
-                licensing_lib = ctypes.cdll.LoadLibrary(path_lib)
-                licensing_lib.generate_hardware_hash.restype = ctypes.c_wchar_p
-                text = licensing_lib.generate_hardware_hash()
-                licensing_lib.checkout_key.restype = ctypes.c_char_p
-                licensing_lib.checkout_key.argtypes = [ctypes.c_wchar_p]
-                checkout_return = licensing_lib.checkout_key(text)
-                print(checkout_return)
+
                 app = QApplication(sys.argv)
                 win = lineEditDemo()
-                win.setWindowTitle(text)
+                win.setWindowTitle("Python Client")
                 win.show()
+                win.appendText("Loading C DLL...\n")
+                licensing_lib = ctypes.cdll.LoadLibrary(path_lib)
+                win.appendText("C DLL loaded successfully.\n")
+                licensing_lib.generate_hardware_hash.restype = ctypes.c_wchar_p
+                win.appendText("Generating hardware hash using C DLL...\n")
+                text = licensing_lib.generate_hardware_hash()
+                win.appendText("Hardware hash generated from C DLL: " + text + "\n")
+                
+                licensing_lib.checkout_key.restype = ctypes.c_char_p
+                licensing_lib.checkout_key.argtypes = [ctypes.c_wchar_p]
+                win.appendText("Calling checkout_key() from C DLL...\n")
+                checkout_return = licensing_lib.checkout_key(text)
+                win.appendText("checkout_key() returned: " + str(checkout_return) + "\n")
                 sys.exit(app.exec_())
 
         except OSError as error:
